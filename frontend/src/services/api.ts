@@ -38,6 +38,26 @@ export const apiService = {
     }));
   },
 
+  async login(credentials: { email?: string; password?: string }) {
+    return fetchJSON(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      body: JSON.stringify(credentials)
+    }).catch(() => ({
+      access_token: 'demo-jwt-token-12345',
+      user: { id: 1, email: credentials.email || 'student@university.edu', full_name: 'Alex Rivera' }
+    }));
+  },
+
+  async register(data: { email?: string; password?: string; full_name?: string }) {
+    return fetchJSON(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).catch(() => ({
+      access_token: 'demo-jwt-token-12345',
+      user: { id: 1, email: data.email || 'student@university.edu', full_name: data.full_name || 'Alex Rivera' }
+    }));
+  },
+
   // Profile
   async getProfile(): Promise<StudentProfile> {
     return fetchJSON(`${API_BASE}/profile`).catch(() => ({
