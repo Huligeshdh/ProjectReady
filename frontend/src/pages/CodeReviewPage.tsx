@@ -7,6 +7,7 @@ import {
 import { apiService } from '../services/api';
 import { CodeReview } from '../types';
 import { CodeDiffViewer } from '../components/UI/CodeDiffViewer';
+import { calculateOverallScore } from '../utils/scoring';
 
 // ─── Localized Error Boundary ───
 class CodeReviewErrorBoundary extends React.Component<
@@ -176,16 +177,16 @@ const CodeReviewPageInner: React.FC = () => {
 
   // Derive display data with safe fallbacks
   const sampleCriteria = review?.criteria || {
-    code_quality: { score: 88.0, weight: 0.20, label: "Code Quality", evidence: "AST analysis verified modular FastAPI & React structure." },
-    security: { score: 79.0, weight: 0.20, label: "Security", evidence: "Secret scan detected unvalidated JWT expiration claim." },
-    efficiency: { score: 84.0, weight: 0.15, label: "Efficiency", evidence: "Low loop complexity. Measured PyTorch inference pipeline." },
-    testing: { score: 67.0, weight: 0.15, label: "Testing", evidence: "18 test files detected. Coverage not measured." },
-    accessibility: { score: 91.0, weight: 0.10, label: "Accessibility", evidence: "High contrast Liquid Glass UI & aria-labels present." },
-    problem_alignment: { score: 86.0, weight: 0.20, label: "Problem Alignment", evidence: "6 of 6 planned features detected in codebase." }
+    code_quality: { score: 84.0, weight: 0.1667, label: "Code Quality", evidence: "AST analysis verified modular FastAPI & React structure." },
+    security: { score: 81.0, weight: 0.1667, label: "Security", evidence: "Secret scan detected unvalidated JWT expiration claim." },
+    efficiency: { score: 80.0, weight: 0.1667, label: "Efficiency", evidence: "Low loop complexity. Measured PyTorch inference pipeline." },
+    testing: { score: 16.0, weight: 0.1667, label: "Testing", evidence: "Only basic unit test placeholders detected." },
+    accessibility: { score: 95.0, weight: 0.1667, label: "Accessibility", evidence: "High contrast Liquid Glass UI & aria-labels present." },
+    problem_alignment: { score: 93.0, weight: 0.1667, label: "Problem Statement Alignment", evidence: "6 of 6 planned features detected in codebase." }
   };
 
   const sampleAlignment = review?.alignment || {
-    score: 86.0,
+    score: 93.0,
     problem_statement: "Students struggle to find personalized project ideas, plan architecture, and verify code quality before evaluation.",
     planned_features_count: 6,
     detected_features_count: 6,
@@ -206,7 +207,8 @@ const CodeReviewPageInner: React.FC = () => {
     severityFilter === 'ALL' ? true : i.severity === severityFilter
   );
 
-  const submissionScore = review?.submission_score || review?.health_score || 82.0;
+  // Dynamically calculate overall AI Evaluation Score as average of 6 criteria
+  const calculatedScore = calculateOverallScore(sampleCriteria);
 
   // ─── Loading State ───
   if (loading) {
@@ -262,9 +264,36 @@ const CodeReviewPageInner: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-right shrink-0">
-          <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">AI Code Submission Score</span>
-          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{submissionScore} <span className="text-xs font-normal text-slate-500">/ 100</span></span>
+        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-right shrink-0 relative group">
+          <div className="flex items-center justify-end gap-1 mb-0.5 cursor-help">
+            <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">AI Code Submission Score</span>
+            <HelpCircle className="w-3.5 h-3.5 text-brand-500 hover:text-brand-400 transition" />
+          </div>
+
+          {/* Tooltip / Popup detailing the math */}
+          <div className="absolute right-0 top-12 hidden group-hover:block z-40 w-80 p-3.5 rounded-2xl bg-slate-900 text-slate-100 text-left text-xs shadow-2xl border border-slate-700 space-y-2 animate-fadeIn">
+            <div className="flex items-center gap-1.5 text-emerald-400 font-extrabold text-xs">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Score Calculation Methodology</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              <strong>Overall Score = Arithmetic Average of all 6 criteria</strong> (Equal 16.6667% weight each).
+            </p>
+            <div className="p-2 rounded-xl bg-slate-800/90 font-mono text-[10px] text-slate-200 space-y-1">
+              <div>Sum: ({sampleCriteria.code_quality?.score ?? 0} + {sampleCriteria.security?.score ?? 0} + {sampleCriteria.efficiency?.score ?? 0} + {sampleCriteria.testing?.score ?? 0} + {sampleCriteria.accessibility?.score ?? 0} + {sampleCriteria.problem_alignment?.score ?? sampleCriteria.problem_statement_alignment?.score ?? 0}) / 6</div>
+              <div className="text-emerald-400 font-bold">= {calculatedScore !== null ? calculatedScore.toFixed(2) : 'Error'} / 100</div>
+            </div>
+          </div>
+
+          {calculatedScore !== null ? (
+            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+              {calculatedScore.toFixed(2)} <span className="text-xs font-normal text-slate-500">/ 100</span>
+            </span>
+          ) : (
+            <div className="text-xs font-bold text-rose-500 flex items-center justify-end gap-1">
+              <AlertTriangle className="w-3.5 h-3.5" /> Missing Criterion
+            </div>
+          )}
         </div>
       </div>
 
@@ -379,7 +408,7 @@ const CodeReviewPageInner: React.FC = () => {
                 <Award className="w-5 h-5 text-brand-500 dark:text-brand-400" />
                 Six Official Competition Criteria
               </h2>
-              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">Weights sum to 100%</span>
+              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">Weights sum to 100% (16.67% each)</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -387,7 +416,7 @@ const CodeReviewPageInner: React.FC = () => {
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Code Quality</span>
-                  <span className="text-xs font-mono bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded font-bold">20% Weight</span>
+                  <span className="text-xs font-mono bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded font-bold">16.67% Weight</span>
                 </div>
                 <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
                   {sampleCriteria.code_quality?.score ?? '—'} <span className="text-xs text-slate-500 font-normal">/ 100</span>
@@ -404,7 +433,7 @@ const CodeReviewPageInner: React.FC = () => {
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Security</span>
-                  <span className="text-xs font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded font-bold">20% Weight</span>
+                  <span className="text-xs font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded font-bold">16.67% Weight</span>
                 </div>
                 <div className="text-2xl font-black text-amber-600 dark:text-amber-400">
                   {sampleCriteria.security?.score ?? '—'} <span className="text-xs text-slate-500 font-normal">/ 100</span>
@@ -421,7 +450,7 @@ const CodeReviewPageInner: React.FC = () => {
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Efficiency</span>
-                  <span className="text-xs font-mono bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-bold">15% Weight</span>
+                  <span className="text-xs font-mono bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-bold">16.67% Weight</span>
                 </div>
                 <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
                   {sampleCriteria.efficiency?.score ?? '—'} <span className="text-xs text-slate-500 font-normal">/ 100</span>
@@ -438,7 +467,7 @@ const CodeReviewPageInner: React.FC = () => {
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Testing</span>
-                  <span className="text-xs font-mono bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded font-bold">15% Weight</span>
+                  <span className="text-xs font-mono bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded font-bold">16.67% Weight</span>
                 </div>
                 <div className="text-2xl font-black text-yellow-600 dark:text-yellow-400">
                   {sampleCriteria.testing?.score ?? '—'} <span className="text-xs text-slate-500 font-normal">/ 100</span>
@@ -455,7 +484,7 @@ const CodeReviewPageInner: React.FC = () => {
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Accessibility</span>
-                  <span className="text-xs font-mono bg-teal-500/10 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded font-bold">10% Weight</span>
+                  <span className="text-xs font-mono bg-teal-500/10 text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded font-bold">16.67% Weight</span>
                 </div>
                 <div className="text-2xl font-black text-teal-600 dark:text-teal-400">
                   {sampleCriteria.accessibility?.score ?? '—'} <span className="text-xs text-slate-500 font-normal">/ 100</span>
@@ -472,13 +501,13 @@ const CodeReviewPageInner: React.FC = () => {
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-brand-500/40 backdrop-blur-md space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-brand-600 dark:text-brand-300">Problem Alignment</span>
-                  <span className="text-xs font-mono bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded font-bold">20% Weight</span>
+                  <span className="text-xs font-mono bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded font-bold">16.67% Weight</span>
                 </div>
                 <div className="text-2xl font-black text-brand-600 dark:text-brand-300">
-                  {sampleCriteria.problem_alignment?.score ?? '—'} <span className="text-xs text-slate-500 font-normal">/ 100</span>
+                  {sampleCriteria.problem_alignment?.score ?? sampleCriteria.problem_statement_alignment?.score ?? '—'} <span className="text-xs text-slate-500 font-normal">/ 100</span>
                 </div>
                 <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
-                  {sampleCriteria.problem_alignment?.evidence ?? 'Not analyzed yet'}
+                  {sampleCriteria.problem_alignment?.evidence ?? sampleCriteria.problem_statement_alignment?.evidence ?? 'Not analyzed yet'}
                 </p>
                 <div className="pt-2 text-[10px] text-brand-600 dark:text-brand-400 font-medium flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> High feature alignment
