@@ -1039,6 +1039,6 @@ MIT License
 
 ## 👨‍💻 Author
 
-**Huligesh D Hosamani**
+**Huligesh D Hosamani Pavar**
 
 Computer Science Engineering — AI & ML
