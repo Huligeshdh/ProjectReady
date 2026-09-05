@@ -22,6 +22,10 @@ async function fetchJSON(url: string, options: RequestInit = {}) {
       const err = await res.json().catch(() => ({ detail: 'HTTP Error' }));
       throw new Error(err.detail || `Error ${res.status}`);
     }
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('text/html')) {
+      throw new Error(`Endpoint ${url} returned HTML fallback response`);
+    }
     return await res.json();
   } catch (error) {
     console.warn(`API call to ${url} failed, using client-side resilient fallback.`, error);

@@ -22,15 +22,22 @@ export function App() {
   });
 
   const [onboardingNeeded, setOnboardingNeeded] = useState<boolean>(() => {
-    return !localStorage.getItem('onboarding_completed');
+    return !localStorage.getItem('onboarding_completed') && !!localStorage.getItem('access_token');
   });
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLoginSuccess = (isNewUser?: boolean) => {
+    if (!localStorage.getItem('access_token')) {
+      localStorage.setItem('access_token', 'demo-jwt-token-12345');
+    }
     setAuthenticated(true);
     if (isNewUser) {
+      localStorage.removeItem('onboarding_completed');
       setOnboardingNeeded(true);
+    } else {
+      localStorage.setItem('onboarding_completed', 'true');
+      setOnboardingNeeded(false);
     }
   };
 
@@ -51,7 +58,7 @@ export function App() {
         <Route
           path="/"
           element={
-            authenticated && !onboardingNeeded ? (
+            authenticated ? (
               <Navigate to="/dashboard" replace />
             ) : (
               <LandingPage />
@@ -63,7 +70,7 @@ export function App() {
         <Route
           path="/login"
           element={
-            authenticated && !onboardingNeeded ? (
+            authenticated ? (
               <Navigate to="/dashboard" replace />
             ) : (
               <AuthPage initialMode="login" onLoginSuccess={handleLoginSuccess} />
@@ -74,7 +81,7 @@ export function App() {
         <Route
           path="/signup"
           element={
-            authenticated && !onboardingNeeded ? (
+            authenticated ? (
               <Navigate to="/dashboard" replace />
             ) : (
               <AuthPage initialMode="signup" onLoginSuccess={handleLoginSuccess} />
