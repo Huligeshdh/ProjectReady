@@ -10,12 +10,12 @@ router = APIRouter(prefix="/code-review", tags=["Code Review & AI Submission"])
 
 # Default 6 competition criteria (used when no real analysis exists yet)
 DEFAULT_CRITERIA = {
-    "code_quality": { "score": 84.0, "weight": 0.1667, "label": "Code Quality", "evidence": "AST analysis verified modular FastAPI & React structure.", "measured_type": "Static Analysis" },
-    "security": { "score": 81.0, "weight": 0.1667, "label": "Security", "evidence": "Secret scan detected unvalidated JWT expiration claim.", "measured_type": "Static Analysis" },
-    "efficiency": { "score": 80.0, "weight": 0.1667, "label": "Efficiency", "evidence": "Low loop complexity. Efficient PyTorch inference pipeline.", "measured_type": "Measured" },
-    "testing": { "score": 16.0, "weight": 0.1667, "label": "Testing", "evidence": "Only basic unit test placeholders detected.", "measured_type": "Measured" },
-    "accessibility": { "score": 95.0, "weight": 0.1667, "label": "Accessibility", "evidence": "High contrast Liquid Glass UI & aria-labels present.", "measured_type": "Static Analysis" },
-    "problem_alignment": { "score": 93.0, "weight": 0.1667, "label": "Problem Statement Alignment", "evidence": "6 of 6 planned features detected in codebase.", "measured_type": "AI Assessment" }
+    "code_quality": { "score": 88.0, "weight": 0.20, "label": "Code Quality", "evidence": "AST analysis verified modular FastAPI & React structure.", "measured_type": "Static Analysis" },
+    "security": { "score": 79.0, "weight": 0.20, "label": "Security", "evidence": "Secret scan detected unvalidated JWT expiration claim.", "measured_type": "Static Analysis" },
+    "efficiency": { "score": 84.0, "weight": 0.15, "label": "Efficiency", "evidence": "Low loop complexity. Efficient PyTorch inference pipeline.", "measured_type": "Measured" },
+    "testing": { "score": 67.0, "weight": 0.15, "label": "Testing", "evidence": "18 test files detected. Coverage not measured.", "measured_type": "Measured" },
+    "accessibility": { "score": 91.0, "weight": 0.10, "label": "Accessibility", "evidence": "High contrast Liquid Glass UI & aria-labels present.", "measured_type": "Static Analysis" },
+    "problem_alignment": { "score": 86.0, "weight": 0.20, "label": "Problem Alignment", "evidence": "6 of 6 planned features detected in codebase.", "measured_type": "AI Assessment" }
 }
 
 DEFAULT_ALIGNMENT = {

@@ -490,16 +490,16 @@ export const apiService = {
       total_lines: 3840,
       languages_detected: ['Python', 'TypeScript'],
       frameworks_detected: ['FastAPI', 'React', 'PyTorch'],
-      health_score: 74.83,
-      submission_score: 74.83,
+      health_score: 82.0,
+      submission_score: 82.0,
       created_at: new Date().toISOString(),
       criteria: {
-        code_quality: { score: 84.0, weight: 0.1667, label: "Code Quality", evidence: "AST analysis verified modular FastAPI & React structure." },
-        security: { score: 81.0, weight: 0.1667, label: "Security", evidence: "Secret scan detected unvalidated JWT expiration claim." },
-        efficiency: { score: 80.0, weight: 0.1667, label: "Efficiency", evidence: "Low loop complexity. Efficient PyTorch inference pipeline." },
-        testing: { score: 16.0, weight: 0.1667, label: "Testing", evidence: "Only basic unit test placeholders detected." },
-        accessibility: { score: 95.0, weight: 0.1667, label: "Accessibility", evidence: "High contrast Liquid Glass UI & aria-labels present." },
-        problem_alignment: { score: 93.0, weight: 0.1667, label: "Problem Statement Alignment", evidence: "6 of 6 planned features detected in codebase." }
+        code_quality: { score: 88.0, weight: 0.20, label: "Code Quality", evidence: "AST analysis verified modular FastAPI & React structure." },
+        security: { score: 79.0, weight: 0.20, label: "Security", evidence: "Secret scan detected unvalidated JWT expiration claim." },
+        efficiency: { score: 84.0, weight: 0.15, label: "Efficiency", evidence: "Low loop complexity. Efficient PyTorch inference pipeline." },
+        testing: { score: 67.0, weight: 0.15, label: "Testing", evidence: "18 test files detected. Coverage not measured." },
+        accessibility: { score: 91.0, weight: 0.10, label: "Accessibility", evidence: "High contrast Liquid Glass UI & aria-labels present." },
+        problem_alignment: { score: 86.0, weight: 0.20, label: "Problem Alignment", evidence: "6 of 6 planned features detected in codebase." }
       },
       alignment: {
         score: 86.0,
@@ -571,16 +571,16 @@ export const apiService = {
       total_lines: 3240,
       languages_detected: ['Python', 'TypeScript'],
       frameworks_detected: ['FastAPI', 'React', 'PyTorch'],
-      health_score: 74.83,
-      submission_score: 74.83,
+      health_score: 75.0,
+      submission_score: 75.0,
       created_at: new Date().toISOString(),
       criteria: {
-        code_quality: { score: 84.0, weight: 0.1667, label: "Code Quality", evidence: "AST analysis verified modular FastAPI & React structure." },
-        security: { score: 81.0, weight: 0.1667, label: "Security", evidence: "Secret scan detected unvalidated JWT expiration claim." },
-        efficiency: { score: 80.0, weight: 0.1667, label: "Efficiency", evidence: "Low loop complexity. Efficient PyTorch inference pipeline." },
-        testing: { score: 16.0, weight: 0.1667, label: "Testing", evidence: "Only basic unit test placeholders detected." },
-        accessibility: { score: 95.0, weight: 0.1667, label: "Accessibility", evidence: "High contrast Liquid Glass UI & aria-labels present." },
-        problem_alignment: { score: 93.0, weight: 0.1667, label: "Problem Statement Alignment", evidence: "6 of 6 planned features detected in codebase." }
+        code_quality: { score: 88.0, weight: 0.20, label: "Code Quality", evidence: "AST analysis verified modular FastAPI & React structure." },
+        security: { score: 79.0, weight: 0.20, label: "Security", evidence: "Secret scan detected unvalidated JWT expiration claim." },
+        efficiency: { score: 84.0, weight: 0.15, label: "Efficiency", evidence: "Low loop complexity. Efficient PyTorch inference pipeline." },
+        testing: { score: 67.0, weight: 0.15, label: "Testing", evidence: "18 test files detected. Coverage not measured." },
+        accessibility: { score: 91.0, weight: 0.10, label: "Accessibility", evidence: "High contrast Liquid Glass UI & aria-labels present." },
+        problem_alignment: { score: 86.0, weight: 0.20, label: "Problem Alignment", evidence: "6 of 6 planned features detected in codebase." }
       },
       issues: [
         {
@@ -812,12 +812,18 @@ export const apiService = {
   // Submission History
   async getSubmissionHistory(projectId: number = 1): Promise<any[]> {
     return fetchJSON(`${API_BASE}/code-review/history/${projectId}`).catch(() => [
-      { run_number: 1, submission_score: 64.0, created_at: '2026-09-01T10:00:00', zip_filename: 'submission_v1.zip',
-        criteria: { code_quality: 71, security: 54, efficiency: 73, testing: 42, accessibility: 68, problem_alignment: 76 } },
-      { run_number: 2, submission_score: 73.0, created_at: '2026-09-03T14:30:00', zip_filename: 'submission_v2.zip',
-        criteria: { code_quality: 79, security: 72, efficiency: 78, testing: 58, accessibility: 82, problem_alignment: 80 } },
-      { run_number: 3, submission_score: 86.0, created_at: '2026-09-05T11:00:00', zip_filename: 'submission_v3_final.zip',
-        criteria: { code_quality: 88, security: 91, efficiency: 82, testing: 78, accessibility: 89, problem_alignment: 88 } },
+      {
+        run_number: 1, submission_score: 64.0, created_at: '2026-09-01T10:00:00', zip_filename: 'submission_v1.zip',
+        criteria: { code_quality: 71, security: 54, efficiency: 73, testing: 42, accessibility: 68, problem_alignment: 76 }
+      },
+      {
+        run_number: 2, submission_score: 73.0, created_at: '2026-09-03T14:30:00', zip_filename: 'submission_v2.zip',
+        criteria: { code_quality: 79, security: 72, efficiency: 78, testing: 58, accessibility: 82, problem_alignment: 80 }
+      },
+      {
+        run_number: 3, submission_score: 86.0, created_at: '2026-09-05T11:00:00', zip_filename: 'submission_v3_final.zip',
+        criteria: { code_quality: 88, security: 91, efficiency: 82, testing: 78, accessibility: 89, problem_alignment: 88 }
+      },
     ]);
   },
 

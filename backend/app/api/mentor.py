@@ -47,8 +47,8 @@ def assemble_mentor_context(db: Session, project_id: int, user_message: str = ""
         project = db.query(Project).first()
 
     project_title = project.title if project else "AI Clinical Decision Support for Diabetic Retinopathy"
-    problem_statement = project.problem_statement if project else "Early detection of diabetic retinopathy using deep learning and clinical decision support API."
-    current_stage = project.current_stage if project else "BUILDING"
+    problem_statement = (getattr(project, 'description', None) or getattr(project, 'problem_statement', None)) if project else "Early detection of diabetic retinopathy using deep learning and clinical decision support API."
+    current_stage = getattr(project, 'status', 'BUILDING') if project else "BUILDING"
 
     blueprint = db.query(ProjectBlueprint).filter(ProjectBlueprint.project_id == (project.id if project else project_id)).first()
     tech_stack = str(blueprint.tech_stack) if blueprint and blueprint.tech_stack else "PyTorch, FastAPI, React, PostgreSQL, TailwindCSS"
@@ -68,7 +68,7 @@ def assemble_mentor_context(db: Session, project_id: int, user_message: str = ""
     
     top_issues_list = []
     if code_review:
-        issues = db.query(CodeReviewIssue).filter(CodeReviewIssue.code_review_id == code_review.id).limit(3).all()
+        issues = db.query(CodeReviewIssue).filter(CodeReviewIssue.review_id == code_review.id).limit(3).all()
         for i in issues:
             top_issues_list.append(f"[{i.severity}] {i.file_path}: {i.problem} -> Fix: {i.recommended_fix}")
     top_issues_str = "; ".join(top_issues_list) if top_issues_list else "Validate JWT expiration claim in auth.py; Add unit tests for PyTorch inference preprocessing"
@@ -78,10 +78,10 @@ def assemble_mentor_context(db: Session, project_id: int, user_message: str = ""
     health_score = health.overall_score if health else 82.0
 
     reality = db.query(RealityCheckEvaluation).filter(RealityCheckEvaluation.project_id == (project.id if project else project_id)).first()
-    survival_score = reality.survival_score if reality else 87.0
+    survival_score = reality.overall_score if reality else 87.0
 
     attack_points = db.query(PanelAttackPoint).limit(3).all()
-    attack_str = "; ".join([a.attack_question for a in attack_points]) if attack_points else "Dataset bias on ethnicity; Real-time inference latency under 50 concurrent requests"
+    attack_str = "; ".join([getattr(a, 'likely_evaluator_question', 'Dataset bias') for a in attack_points]) if attack_points else "Dataset bias on ethnicity; Real-time inference latency under 50 concurrent requests"
 
     # 6. RAG Retrieval
     rag_chunks = []

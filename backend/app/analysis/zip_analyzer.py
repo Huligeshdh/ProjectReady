@@ -5,19 +5,41 @@ import shutil
 import re
 import ast
 from typing import Dict, Any, List
+from app.analysis.scoring import calculate_overall_score
 
 class ZIPCodeAnalyzer:
     """Safe codebase analysis pipeline for student uploaded ZIP archives with 6 Competition Criteria."""
 
     def analyze_zip(self, zip_path: str, planned_features: List[str] = None) -> Dict[str, Any]:
-        temp_dir = tempfile.mkdtemp(prefix="projectready_extract_")
+        import uuid
+        extract_root = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".temp_extracts")
+        temp_dir = os.path.join(extract_root, f"extract_{uuid.uuid4().hex}")
+        os.makedirs(temp_dir, exist_ok=True)
         try:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                # Zip slip security check
                 for file_info in zip_ref.infolist():
-                    if ".." in file_info.filename or file_info.filename.startswith("/"):
+                    # Normalize filename to forward slashes for security check
+                    norm_filename = file_info.filename.replace('\\', '/')
+                    path_parts = norm_filename.split('/')
+                    if ".." in path_parts or norm_filename.startswith('/') or file_info.filename.startswith('\\'):
                         raise ValueError(f"Unsafe file path detected in ZIP: {file_info.filename}")
-                zip_ref.extractall(temp_dir)
+                    
+                    is_directory = file_info.is_dir() or norm_filename.endswith('/')
+                    rel_parts = [p for p in path_parts if p and p != '.']
+                    if not rel_parts:
+                        continue
+                    
+                    target_path = os.path.normpath(os.path.join(temp_dir, *rel_parts))
+                    if is_directory:
+                        os.makedirs(target_path, exist_ok=True)
+                    else:
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        with zip_ref.open(file_info) as source, open(target_path, "wb") as target:
+                            shutil.copyfileobj(source, target)
+                        try:
+                            os.chmod(target_path, 0o666)
+                        except Exception:
+                            pass
 
             # Analyze extracted folder
             file_tree = self._build_file_tree(temp_dir)
@@ -35,27 +57,26 @@ class ZIPCodeAnalyzer:
             high_count = sum(1 for i in issues if i["severity"] == "HIGH")
             med_count = sum(1 for i in issues if i["severity"] == "MEDIUM")
 
-            # 1. Code Quality (16.67%)
+            # 1. Code Quality
             code_quality_score = max(50.0, 92.0 - (med_count * 4.0 + high_count * 8.0))
 
-            # 2. Security (16.67%)
+            # 2. Security
             security_score = max(40.0, 96.0 - (critical_count * 20.0 + high_count * 12.0))
 
-            # 3. Efficiency (16.67%)
+            # 3. Efficiency
             efficiency_score = max(55.0, 88.0 - (files_meta["nested_loops_count"] * 3.0))
 
-            # 4. Testing (16.67%)
+            # 4. Testing
             testing_score = 88.0 if files_meta["has_tests"] else 62.0
 
-            # 5. Accessibility (16.67%)
+            # 5. Accessibility
             accessibility_score = 91.0 if files_meta["has_a11y_labels"] else 74.0
 
-            # 6. Problem Statement Alignment (16.67%)
+            # 6. Problem Statement Alignment
             alignment_results = self._evaluate_problem_alignment(temp_dir, files_meta, planned_features)
             alignment_score = alignment_results["score"]
 
-            # Calculate Equal-Weighted AI Code Submission Score (16.6667% each, arithmetic average)
-            from app.analysis.scoring import calculate_overall_score
+            # Calculate AI Code Submission Score (Equal Arithmetic Average of 6 Criteria)
             submission_score = calculate_overall_score(
                 code_quality_score,
                 security_score,
@@ -67,6 +88,8 @@ class ZIPCodeAnalyzer:
 
             # Overall Project Health (includes broader dimensions)
             overall_health = round((submission_score * 0.85) + 12.0, 1)
+
+            EQUAL_WEIGHT = 0.1667
 
             return {
                 "total_files": total_files,
@@ -82,7 +105,7 @@ class ZIPCodeAnalyzer:
                 "submission_score": submission_score,
                 "criteria": {
                     "code_quality": {
-                        "score": round(code_quality_score, 1), "weight": 0.1667, "label": "Code Quality",
+                        "score": round(code_quality_score, 1), "weight": EQUAL_WEIGHT, "label": "Code Quality",
                         "measured_type": "Static Analysis",
                         "evidence": f"AST analysis scanned {total_files} files ({total_lines} lines). {med_count + high_count} code quality issues detected.",
                         "strengths": ["Modular project structure detected", "Consistent naming conventions"],
@@ -90,7 +113,7 @@ class ZIPCodeAnalyzer:
                         "recommendation": "Address high-severity issues and reduce cyclomatic complexity."
                     },
                     "security": {
-                        "score": round(security_score, 1), "weight": 0.1667, "label": "Security",
+                        "score": round(security_score, 1), "weight": EQUAL_WEIGHT, "label": "Security",
                         "measured_type": "Static Analysis",
                         "evidence": f"Secret pattern scanner checked {total_files} files. {critical_count} critical + {high_count} high security issues found.",
                         "strengths": ["ZIP slip protection active" if security_score > 70 else "Basic structure present"],
@@ -98,7 +121,7 @@ class ZIPCodeAnalyzer:
                         "recommendation": "Move all secrets to environment variables. Validate JWT expiration claims."
                     },
                     "efficiency": {
-                        "score": round(efficiency_score, 1), "weight": 0.1667, "label": "Efficiency",
+                        "score": round(efficiency_score, 1), "weight": EQUAL_WEIGHT, "label": "Efficiency",
                         "measured_type": "Measured",
                         "evidence": f"Detected {files_meta['nested_loops_count']} nested loop patterns. Runtime execution was not performed.",
                         "strengths": ["Low algorithmic complexity detected"] if efficiency_score > 80 else [],
@@ -106,7 +129,7 @@ class ZIPCodeAnalyzer:
                         "recommendation": "Review nested loops for potential optimization. Consider query batching."
                     },
                     "testing": {
-                        "score": round(testing_score, 1), "weight": 0.1667, "label": "Testing",
+                        "score": round(testing_score, 1), "weight": EQUAL_WEIGHT, "label": "Testing",
                         "measured_type": "Measured",
                         "evidence": f"{files_meta['test_files_count']} test files detected. Coverage not measured.",
                         "strengths": [f"{files_meta['test_files_count']} test files found"] if files_meta["has_tests"] else [],
@@ -114,7 +137,7 @@ class ZIPCodeAnalyzer:
                         "recommendation": "Add API integration tests and edge-case validation tests in tests/ directory."
                     },
                     "accessibility": {
-                        "score": round(accessibility_score, 1), "weight": 0.1667, "label": "Accessibility",
+                        "score": round(accessibility_score, 1), "weight": EQUAL_WEIGHT, "label": "Accessibility",
                         "measured_type": "Static Analysis",
                         "evidence": "ARIA labels and alt text " + ("detected in frontend files." if files_meta["has_a11y_labels"] else "not detected in frontend files."),
                         "strengths": ["ARIA labels present", "Semantic HTML detected"] if files_meta["has_a11y_labels"] else [],
@@ -122,7 +145,7 @@ class ZIPCodeAnalyzer:
                         "recommendation": "Verify keyboard navigation and add aria-label to interactive elements."
                     },
                     "problem_alignment": {
-                        "score": round(alignment_score, 1), "weight": 0.1667, "label": "Problem Alignment",
+                        "score": round(alignment_score, 1), "weight": EQUAL_WEIGHT, "label": "Problem Alignment",
                         "measured_type": "AI Assessment",
                         "evidence": f"{alignment_results['detected_features_count']} of {alignment_results['planned_features_count']} planned features detected in codebase.",
                         "strengths": [f"{alignment_results['detected_features_count']} planned capabilities implemented"],
